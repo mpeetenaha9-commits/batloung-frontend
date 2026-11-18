@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaBox, FaTruck, FaUsers, FaTrash, FaPlus, FaAppleAlt, FaTimes, FaEdit, FaShoppingCart, FaMoneyBillWave } from 'react-icons/fa';
+import { FaBox, FaTruck, FaUsers, FaTrash, FaPlus, FaAppleAlt, FaTimes, FaEdit, FaShoppingCart, FaMoneyBillWave, FaSearch } from 'react-icons/fa';
 
 const API_URL = 'https://batloung-farm-production.up.railway.app/api';
 
@@ -11,6 +11,7 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -22,7 +23,10 @@ export default function App() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [activeTab]);
+  useEffect(() => { 
+    fetchData(); 
+    setSearchTerm('');
+  }, [activeTab]);
 
   const handleDelete = async (id) => {
     if(!window.confirm('Are you sure you want to delete this?')) return;
@@ -68,6 +72,13 @@ export default function App() {
 
   const columns = getColumns();
 
+  const filteredData = data.filter(item => {
+    if (!searchTerm) return true;
+    return Object.values(item).some(val => 
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <div className='flex h-screen bg-slate-900 text-slate-100'>
       
@@ -88,7 +99,24 @@ export default function App() {
       <div className='flex-1 p-10 overflow-y-auto'>
         <div className='flex justify-between items-center mb-8'>
           <h2 className='text-3xl font-bold capitalize'>{activeTab} Management</h2>
-          <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+          
+          <div className='flex items-center gap-4'>
+            <div className='relative'>
+              <FaSearch className='absolute left-3 top-3 text-slate-400' />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className='pl-10 pr-4 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-green-500 outline-none text-sm w-64 transition'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* HIDE ADD NEW BUTTON FOR PURCHASES AND SALES */}
+            {activeTab !== 'purchases' && activeTab !== 'sales' && (
+              <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -105,7 +133,7 @@ export default function App() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-slate-700'>
-                {data.map((item, index) => (
+                {filteredData.map((item, index) => (
                   <tr key={index} className='hover:bg-slate-700/50 transition'>
                     {columns.map(key => <td key={key} className='p-4'>{item[key]}</td>)}
                     <td className='p-4 flex justify-end gap-3'>
@@ -137,4 +165,4 @@ export default function App() {
       )}
     </div>
   );
-}
+}S
