@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaBox, FaTruck, FaUsers, FaTrash, FaPlus, FaAppleAlt, FaTimes, FaEdit, FaShoppingCart, FaMoneyBillWave, FaSearch } from 'react-icons/fa';
+import { FaBox, FaTruck, FaUsers, FaTrash, FaPlus, FaAppleAlt, FaTimes, FaEdit, FaSearch } from 'react-icons/fa';
 
 const API_URL = 'https://batloung-farm-production.up.railway.app/api';
 
@@ -16,8 +16,7 @@ export default function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = activeTab === 'purchases' ? 'purchases' : activeTab === 'sales' ? 'sales' : activeTab;
-      const res = await axios.get(API_URL + '/' + endpoint);
+      const res = await axios.get(API_URL + '/' + activeTab);
       setData(res.data.data || []);
     } catch (err) { console.error(err); setData([]); }
     setLoading(false);
@@ -62,8 +61,6 @@ export default function App() {
   };
 
   const getColumns = () => {
-    if (activeTab === 'purchases') return ['purchase_id', 'supplier_id', 'purchase_date', 'total_amount'];
-    if (activeTab === 'sales') return ['sale_id', 'vendor_id', 'sale_date', 'payment_status', 'payment_method', 'total_amount'];
     if (activeTab === 'suppliers') return ['supplier_id', 'business_name', 'contact_person', 'phone', 'province', 'address'];
     if (activeTab === 'fruits') return ['fruit_id', 'fruit_name', 'description', 'status'];
     if (activeTab === 'vendors') return ['vendor_id', 'vendor_name', 'phone_number', 'location', 'registration_date'];
@@ -88,11 +85,6 @@ export default function App() {
           <button onClick={() => setActiveTab('suppliers')} className={'w-full flex items-center gap-3 p-3 rounded-lg transition ' + (activeTab === 'suppliers' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-700')}><FaTruck /> Suppliers</button>
           <button onClick={() => setActiveTab('fruits')} className={'w-full flex items-center gap-3 p-3 rounded-lg transition ' + (activeTab === 'fruits' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-700')}><FaBox /> Fruits</button>
           <button onClick={() => setActiveTab('vendors')} className={'w-full flex items-center gap-3 p-3 rounded-lg transition ' + (activeTab === 'vendors' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-700')}><FaUsers /> Vendors</button>
-          
-          <div className='border-t border-slate-700 pt-3 mt-3'>
-            <button onClick={() => setActiveTab('purchases')} className={'w-full flex items-center gap-3 p-3 rounded-lg transition ' + (activeTab === 'purchases' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-700')}><FaShoppingCart /> Purchases</button>
-            <button onClick={() => setActiveTab('sales')} className={'w-full flex items-center gap-3 p-3 rounded-lg transition ' + (activeTab === 'sales' ? 'bg-green-600 text-white shadow-lg' : 'hover:bg-slate-700')}><FaMoneyBillWave /> Sales</button>
-          </div>
         </nav>
       </div>
 
@@ -112,10 +104,7 @@ export default function App() {
               />
             </div>
 
-            {/* HIDE ADD NEW BUTTON FOR PURCHASES AND SALES */}
-            {activeTab !== 'purchases' && activeTab !== 'sales' && (
-              <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
-            )}
+            <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
           </div>
         </div>
 
@@ -165,4 +154,4 @@ export default function App() {
       )}
     </div>
   );
-}S
+}
