@@ -51,7 +51,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const id = formData.supplier_id || formData.fruit_id || formData.vendor_id || formData.purchase_id || formData.sale_id;
+      const id = formData.supplier_id || formData.fruit_id || formData.vendor_id;
       if (editMode && id) {
         await axios.put(API_URL + '/' + activeTab + '/' + id, formData);
       } else {
@@ -112,7 +112,10 @@ export default function App() {
               />
             </div>
 
-            <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+            {/* HIDE ADD BUTTON FOR PURCHASES AND SALES */}
+            {activeTab !== 'purchases' && activeTab !== 'sales' && (
+              <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+            )}
           </div>
         </div>
 
@@ -157,24 +160,6 @@ export default function App() {
               {activeTab === 'fruits' && <><input required placeholder='Fruit Name' defaultValue={formData.fruit_name} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, fruit_name: e.target.value})} /><input required placeholder='Description' defaultValue={formData.description} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, description: e.target.value})} /></>}
               
               {activeTab === 'vendors' && <><input required placeholder='Vendor Name' defaultValue={formData.vendor_name} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, vendor_name: e.target.value})} /><input required placeholder='Phone Number' defaultValue={formData.phone_number} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, phone_number: e.target.value})} /><input required placeholder='Location' defaultValue={formData.location} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, location: e.target.value})} /></>}
-
-              {activeTab === 'purchases' && <>
-                <input required type="number" placeholder='Supplier ID (e.g. 1)' defaultValue={formData.supplier_id} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, supplier_id: parseInt(e.target.value)})} />
-                <input required type="date" defaultValue={formData.purchase_date} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, purchase_date: e.target.value})} />
-                <input required type="number" placeholder='Total Amount' defaultValue={formData.total_amount} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, total_amount: parseFloat(e.target.value)})} />
-              </>}
-
-              {activeTab === 'sales' && <>
-                <input required type="number" placeholder='Vendor ID (e.g. 1)' defaultValue={formData.vendor_id} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, vendor_id: parseInt(e.target.value)})} />
-                <input required type="date" defaultValue={formData.sale_date} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, sale_date: e.target.value})} />
-                <select required defaultValue={formData.payment_status} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, payment_status: e.target.value})}>
-                  <option value="">Status</option><option value="PAID">PAID</option><option value="PARTIALLY_PAID">PARTIALLY_PAID</option><option value="UNPAID">UNPAID</option>
-                </select>
-                <select required defaultValue={formData.payment_method} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, payment_method: e.target.value})}>
-                  <option value="">Method</option><option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="credit">Credit</option>
-                </select>
-                <input required type="number" placeholder='Total Amount' defaultValue={formData.total_amount} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, total_amount: parseFloat(e.target.value)})} />
-              </>}
               
               <div className='flex justify-end gap-3 mt-6'><button type='button' onClick={() => setShowModal(false)} className='px-4 py-2 rounded text-slate-400 hover:text-white'>Cancel</button><button type='submit' className='bg-green-500 hover:bg-green-400 text-white px-6 py-2 rounded font-bold shadow-lg'>Save</button></div>
             </form>
