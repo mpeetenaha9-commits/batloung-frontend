@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaBox, FaTruck, FaUsers, FaTrash, FaPlus, FaAppleAlt, FaTimes, FaEdit, FaShoppingCart, FaMoneyBillWave, FaSearch } from 'react-icons/fa';
+import Sales from './pages/Sales';
 
 const API_URL = 'https://batloung-farm-production.up.railway.app/api';
 
@@ -14,10 +15,10 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = async () => {
+    if (activeTab === 'sales') { setData([]); return; }
     setLoading(true);
     try {
-      const endpoint = activeTab === 'purchases' ? 'purchases' : activeTab === 'sales' ? 'sales' : activeTab;
-      const res = await axios.get(API_URL + '/' + endpoint);
+      const res = await axios.get(API_URL + '/' + activeTab);
       setData(res.data.data || []);
     } catch (err) { console.error(err); setData([]); }
     setLoading(false);
@@ -63,7 +64,6 @@ export default function App() {
 
   const getColumns = () => {
     if (activeTab === 'purchases') return ['purchase_id', 'supplier_id', 'purchase_date', 'total_amount'];
-    if (activeTab === 'sales') return ['sale_id', 'vendor_id', 'sale_date', 'payment_status', 'payment_method', 'total_amount'];
     if (activeTab === 'suppliers') return ['supplier_id', 'business_name', 'contact_person', 'phone', 'province', 'address'];
     if (activeTab === 'fruits') return ['fruit_id', 'fruit_name', 'description', 'status'];
     if (activeTab === 'vendors') return ['vendor_id', 'vendor_name', 'phone_number', 'location', 'registration_date'];
@@ -96,55 +96,60 @@ export default function App() {
         </nav>
       </div>
 
-      <div className='flex-1 p-10 overflow-y-auto'>
-        <div className='flex justify-between items-center mb-8'>
-          <h2 className='text-3xl font-bold capitalize'>{activeTab} Management</h2>
-          
-          <div className='flex items-center gap-4'>
-            <div className='relative'>
-              <FaSearch className='absolute left-3 top-3 text-slate-400' />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className='pl-10 pr-4 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-green-500 outline-none text-sm w-64 transition'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className={'flex-1 overflow-y-auto ' + (activeTab === 'sales' ? '' : 'p-10')}>
+        {activeTab === 'sales' ? (
+          <Sales />
+        ) : (
+          <>
+            <div className='flex justify-between items-center mb-8'>
+              <h2 className='text-3xl font-bold capitalize'>{activeTab} Management</h2>
+              
+              <div className='flex items-center gap-4'>
+                <div className='relative'>
+                  <FaSearch className='absolute left-3 top-3 text-slate-400' />
+                  <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    className='pl-10 pr-4 py-2 rounded-lg bg-slate-800 border border-slate-700 focus:border-green-500 outline-none text-sm w-64 transition'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                {activeTab !== 'purchases' && (
+                  <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+                )}
+              </div>
             </div>
 
-            {/* HIDE ADD BUTTON FOR PURCHASES AND SALES */}
-            {activeTab !== 'purchases' && activeTab !== 'sales' && (
-              <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
+            {loading ? (
+              <div className='flex justify-center items-center h-64'>
+                <div className='animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500'></div>
+              </div>
+            ) : (
+              <div className='bg-slate-800 rounded-xl shadow-xl overflow-hidden border border-slate-700'>
+                <table className='w-full text-left'>
+                  <thead className='bg-slate-700 text-slate-300 uppercase text-sm'>
+                    <tr>
+                      {columns.map(key => <th key={key} className='p-4'>{key.replace(/_/g, ' ')}</th>)}
+                      <th className='p-4 text-right'>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-slate-700'>
+                    {filteredData.map((item, index) => (
+                      <tr key={index} className='hover:bg-slate-700/50 transition'>
+                        {columns.map(key => <td key={key} className='p-4'>{item[key]}</td>)}
+                        <td className='p-4 flex justify-end gap-3'>
+                          <button onClick={() => handleEdit(item)} className='text-blue-400 hover:text-blue-300 p-2 transition'><FaEdit /></button>
+                          <button onClick={() => handleDelete(item.supplier_id || item.fruit_id || item.vendor_id || item.purchase_id)} className='text-red-400 hover:text-red-300 p-2 transition'><FaTrash /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className='flex justify-center items-center h-64'>
-            <div className='animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-500'></div>
-          </div>
-        ) : (
-          <div className='bg-slate-800 rounded-xl shadow-xl overflow-hidden border border-slate-700'>
-            <table className='w-full text-left'>
-              <thead className='bg-slate-700 text-slate-300 uppercase text-sm'>
-                <tr>
-                  {columns.map(key => <th key={key} className='p-4'>{key.replace('_', ' ')}</th>)}
-                  <th className='p-4 text-right'>Actions</th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-slate-700'>
-                {filteredData.map((item, index) => (
-                  <tr key={index} className='hover:bg-slate-700/50 transition'>
-                    {columns.map(key => <td key={key} className='p-4'>{item[key]}</td>)}
-                    <td className='p-4 flex justify-end gap-3'>
-                      <button onClick={() => handleEdit(item)} className='text-blue-400 hover:text-blue-300 p-2 transition'><FaEdit /></button>
-                      <button onClick={() => handleDelete(item.supplier_id || item.fruit_id || item.vendor_id || item.purchase_id || item.sale_id)} className='text-red-400 hover:text-red-300 p-2 transition'><FaTrash /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          </>
         )}
       </div>
 
