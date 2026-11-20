@@ -13,6 +13,21 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // State for the Purchase form dropdowns
+  const [suppliers, setSuppliers] = useState([]);
+  const [fruits, setFruits] = useState([]);
+
+  useEffect(() => {
+    // Fetch suppliers and fruits on load so the Purchase form has options
+    Promise.all([
+      axios.get(API_URL + '/suppliers'),
+      axios.get(API_URL + '/fruits')
+    ]).then(([sRes, fRes]) => {
+      setSuppliers(sRes.data.data || []);
+      setFruits(fRes.data.data || []);
+    }).catch(console.error);
+  }, []);
 
   const fetchData = async () => {
     if (activeTab === 'sales') { setData([]); return; }
@@ -52,14 +67,34 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const id = formData.supplier_id || formData.fruit_id || formData.vendor_id;
-      if (editMode && id) {
-        await axios.put(API_URL + '/' + activeTab + '/' + id, formData);
+      if (activeTab === 'purchases') {
+        // Format the payload correctly for the backend purchases route
+        const payload = {
+          supplier_id: Number(formData.supplier_id),
+          purchase_date: formData.purchase_date || new Date().toISOString().split('T')[0],
+          items: [{
+            fruit_id: Number(formData.fruit_id),
+            packaging_size: formData.packaging_size,
+            quantity: Number(formData.quantity),
+            unit_cost: Number(formData.unit_cost)
+          }]
+        };
+        
+        if (editMode) {
+          await axios.put(API_URL + '/purchases/' + formData.purchase_id, formData);
+        } else {
+          await axios.post(API_URL + '/purchases', payload);
+        }
       } else {
-        await axios.post(API_URL + '/' + activeTab, formData);
+        const id = formData.supplier_id || formData.fruit_id || formData.vendor_id;
+        if (editMode && id) {
+          await axios.put(API_URL + '/' + activeTab + '/' + id, formData);
+        } else {
+          await axios.post(API_URL + '/' + activeTab, formData);
+        }
       }
       setShowModal(false); setFormData({}); fetchData();
-    } catch (err) { alert('Error saving record.'); }
+    } catch (err) { alert('Error saving record: ' + (err.response?.data?.message || err.message)); }
   };
 
   const getColumns = () => {
@@ -116,9 +151,8 @@ export default function App() {
                   />
                 </div>
 
-                {activeTab !== 'purchases' && (
-                  <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
-                )}
+                {/* Add New button now shows for Purchases too */}
+                <button onClick={handleAddNew} className='bg-green-500 hover:bg-green-400 text-white px-5 py-2 rounded-lg flex items-center gap-2 font-semibold transition shadow-lg shadow-green-500/30'><FaPlus /> Add New</button>
               </div>
             </div>
 
@@ -165,6 +199,31 @@ export default function App() {
               {activeTab === 'fruits' && <><input required placeholder='Fruit Name' defaultValue={formData.fruit_name} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, fruit_name: e.target.value})} /><input required placeholder='Description' defaultValue={formData.description} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, description: e.target.value})} /></>}
               
               {activeTab === 'vendors' && <><input required placeholder='Vendor Name' defaultValue={formData.vendor_name} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, vendor_name: e.target.value})} /><input required placeholder='Phone Number' defaultValue={formData.phone_number} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, phone_number: e.target.value})} /><input required placeholder='Location' defaultValue={formData.location} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, location: e.target.value})} /></>}
+              
+              {activeTab === 'purchases' && <>
+                <select required value={formData.supplier_id || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, supplier_id: e.target.value})}>
+                  <option value=''>Select Supplier</option>
+                  {suppliers.map(s => <option key={s.supplier_id} value={s.supplier_id}>{s.business_name}</option>)}
+                </select>
+                <input required type="date" value={formData.purchase_date || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none text-slate-300' onChange={e => setFormData({...formData, purchase_date: e.target.value})} />
+                
+                {!editMode && (
+                  <>
+                    <select required value={formData.fruit_id || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, fruit_id: e.target.value})}>
+                      <option value=''>Select Fruit</option>
+                      {fruits.map(f => <option key={f.fruit_id} value={f.fruit_id}>{f.fruit_name}</option>)}
+                    </select>
+                    <select required value={formData.packaging_size || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, packaging_size: e.target.value})}>
+                      <option value=''>Select Size</option>
+                      <option value='small'>Small</option>
+                      <option value='medium'>Medium</option>
+                      <option value='large'>Large</option>
+                    </select>
+                    <input required type="number" placeholder='Quantity (boxes)' value={formData.quantity || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, quantity: e.target.value})} />
+                    <input required type="number" step="0.01" placeholder='Unit Cost (M)' value={formData.unit_cost || ''} className='w-full p-3 rounded bg-slate-900 border border-slate-700 focus:border-green-500 outline-none' onChange={e => setFormData({...formData, unit_cost: e.target.value})} />
+                  </>
+                )}
+              </>}
               
               <div className='flex justify-end gap-3 mt-6'><button type='button' onClick={() => setShowModal(false)} className='px-4 py-2 rounded text-slate-400 hover:text-white'>Cancel</button><button type='submit' className='bg-green-500 hover:bg-green-400 text-white px-6 py-2 rounded font-bold shadow-lg'>Save</button></div>
             </form>
